@@ -7,6 +7,11 @@
     "noImplicitOverride": true,
     "noPropertyAccessFromIndexSignature": true,
     "noImplicitReturns": true,
+    "paths": {
+      "ngx-firestore-kit": [
+        "./dist/ngx-firestore-kit"
+      ]
+    },
     "noFallthroughCasesInSwitch": true,
     "skipLibCheck": true,
     "isolatedModules": true,
@@ -22,5 +27,13 @@
     "typeCheckHostBindings": true,
     "strictTemplates": true
   },
-  "files": []
+  "files": [],
+  "references": [
+    {
+      "path": "./projects/ngx-firestore-kit/tsconfig.lib.json"
+    },
+    {
+      "path": "./projects/ngx-firestore-kit/tsconfig.spec.json"
+    }
+  ]
 }
