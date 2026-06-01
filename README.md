@@ -1,59 +1,243 @@
-# FirestoreUiKit
+# ngx-firestore-wrapper-kit — Integration Guide
 
-This project was generated using [Angular CLI](https://github.com/angular/angular-cli) version 20.0.0.
+Steps to install, configure, and use this library in an Angular application.
 
-## Development server
+<p style="font-size: 1.15rem; line-height: 1.6;"><strong>Requirements:</strong> Angular ^20.3.0, a Firebase project with Firestore enabled.</p>
 
-To start a local development server, run:
+<div style="background: #f6f8fa; border: 1px solid #d0d7de; border-left: 4px solid #0969da; border-radius: 8px; padding: 1rem 1.25rem; margin: 1rem 0; font-size: 1rem; line-height: 1.6;">
 
-```bash
-ng serve
-```
+<p style="font-size: 1.05rem; font-weight: 600; margin: 0 0 0.75rem; padding-bottom: 0.5rem; border-bottom: 1px solid #d8dee4;">On this page</p>
 
-Once the server is running, open your browser and navigate to `http://localhost:4200/`. The application will automatically reload whenever you modify any of the source files.
+<ul style="margin: 0; padding-left: 1.25rem;">
+  <li style="margin-bottom: 0.35rem;"><a href="#1-install" style="color: #0969da; text-decoration: none;">1. Install</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#2-firebase-configuration" style="color: #0969da; text-decoration: none;">2. Firebase configuration</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#3-register-the-library-in-your-app" style="color: #0969da; text-decoration: none;">3. Register the library in your app</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#4-usage" style="color: #0969da; text-decoration: none;">4. Usage</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#5-checklist" style="color: #0969da; text-decoration: none;">5. Checklist</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#exports-reference" style="color: #0969da; text-decoration: none;">Exports reference</a></li>
+</ul>
 
-## Code scaffolding
+<p style="font-size: 0.95rem; font-weight: 600; margin: 1rem 0 0.5rem; color: #57606a;">Usage sections</p>
 
-Angular CLI includes powerful code scaffolding tools. To generate a new component, run:
+<ul style="margin: 0; padding-left: 1.25rem;">
+  <li style="margin-bottom: 0.35rem;"><a href="#response-shape" style="color: #0969da; text-decoration: none;">Response shape</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#listen-to-a-document-real-time" style="color: #0969da; text-decoration: none;">Listen to a document (real-time)</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#listen-to-a-collection-real-time" style="color: #0969da; text-decoration: none;">Listen to a collection (real-time)</a></li>
+  <li style="margin-bottom: 0.35rem;"><a href="#path-helpers" style="color: #0969da; text-decoration: none;">Path helpers</a></li>
+</ul>
 
-```bash
-ng generate component component-name
-```
+</div>
 
-For a complete list of available schematics (such as `components`, `directives`, or `pipes`), run:
+---
 
-```bash
-ng generate --help
-```
+<a id="1-install"></a>
 
-## Building
+## 1. Install
 
-To build the project run:
-
-```bash
-ng build
-```
-
-This will compile your project and store the build artifacts in the `dist/` directory. By default, the production build optimizes your application for performance and speed.
-
-## Running unit tests
-
-To execute unit tests with the [Karma](https://karma-runner.github.io) test runner, use the following command:
+### From npm
 
 ```bash
-ng test
+npm install ngx-firestore-wrapper-kit
 ```
 
-## Running end-to-end tests
+---
 
-For end-to-end (e2e) testing, run:
+<a id="2-firebase-configuration"></a>
 
-```bash
-ng e2e
+## 2. Firebase configuration
+
+Add the Firebase config to your environment file (`src/environments/environment.ts`):
+
+```typescript
+import { FirebaseOptions } from '@angular/fire/app';
+
+export const environment = {
+  production: false,
+  firebaseConfig: {
+    apiKey: 'YOUR_API_KEY',
+    authDomain: 'YOUR_PROJECT.firebaseapp.com',
+    projectId: 'YOUR_PROJECT_ID',
+    storageBucket: 'YOUR_PROJECT.appspot.com',
+    messagingSenderId: 'YOUR_SENDER_ID',
+    appId: 'YOUR_APP_ID'
+  } as FirebaseOptions
+};
 ```
 
-Angular CLI does not come with an end-to-end testing framework by default. You can choose one that suits your needs.
+Get these values from [Firebase Console](https://console.firebase.google.com/) → **Project settings** → **Your apps** → Web app config.
 
-## Additional Resources
+---
 
-For more information on using the Angular CLI, including detailed command references, visit the [Angular CLI Overview and Command Reference](https://angular.dev/tools/cli) page.
+<a id="3-register-the-library-in-your-app"></a>
+
+## 3. Register the library in your app
+
+**`app.config.ts`:**
+
+```typescript
+import { ApplicationConfig } from '@angular/core';
+import { provideFirestoreKit } from 'ngx-firestore-wrapper-kit';
+import { environment } from './environments/environment';
+
+export const appConfig: ApplicationConfig = {
+  providers: [
+    provideFirestoreKit(environment.firebaseConfig)
+  ]
+};
+```
+
+---
+
+<a id="4-usage"></a>
+
+## 4. Usage
+
+Import from the package:
+
+```typescript
+import {
+  FirestoreDataService,
+  FirestorePaths,
+  FirestoreResponse
+} from 'ngx-firestore-wrapper-kit';
+```
+
+Inject `FirestoreDataService` where you need Firestore data. It is `providedIn: 'root'`, so no extra providers are required.
+
+<a id="response-shape"></a>
+
+### Response shape
+
+All listener methods return `Observable<FirestoreResponse<T>>`:
+
+```typescript
+interface FirestoreResponse<T> {
+  success: boolean;
+  data: any;      // payload when success is true
+  error: unknown; // error when success is false
+}
+```
+
+Always check `success` before using `data`.
+
+---
+
+<a id="listen-to-a-document-real-time"></a>
+
+### Listen to a document (real-time)
+
+```typescript
+import { inject, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { FirestoreDataService, FirestorePaths, FirestoreResponse } from 'ngx-firestore-wrapper-kit';
+
+interface BatchJob {
+  status: string;
+  progress: number;
+}
+
+export class BatchJobComponent implements OnInit, OnDestroy {
+  private readonly firestoreData = inject(FirestoreDataService);
+  private sub?: Subscription;
+
+  response: FirestoreResponse<BatchJob> | null = null;
+
+  ngOnInit(): void {
+    const path = FirestorePaths.getBatchJobDocumentPath('client-001', 'job-001');
+
+    this.sub = this.firestoreData
+      .listenToDocument<BatchJob>(path)
+      .subscribe((res) => (this.response = res));
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
+}
+```
+
+---
+
+<a id="listen-to-a-collection-real-time"></a>
+
+### Listen to a collection (real-time)
+
+```typescript
+import { inject, OnDestroy, OnInit } from '@angular/core';
+import { Subscription } from 'rxjs';
+import { FirestoreDataService, FirestorePaths, FirestoreResponse } from 'ngx-firestore-wrapper-kit';
+
+interface BatchJob {
+  status: string;
+  progress: number;
+}
+
+export class BatchJobListComponent implements OnInit, OnDestroy {
+  private readonly firestoreData = inject(FirestoreDataService);
+  private sub?: Subscription;
+
+  response: FirestoreResponse<BatchJob[]> | null = null;
+
+  ngOnInit(): void {
+    const path = FirestorePaths.getBatchJobCollectionPath('client-001');
+
+    this.sub = this.firestoreData
+      .listenToCollection<BatchJob>(path)
+      .subscribe((res) => (this.response = res));
+  }
+
+  ngOnDestroy(): void {
+    this.sub?.unsubscribe();
+  }
+}
+```
+
+---
+
+<a id="path-helpers"></a>
+
+### Path helpers
+
+Build paths as **string arrays** — alternating collection and document IDs:
+
+```typescript
+// Document: collection/{collectionId}/childCollection/{childCollectionDocumentId}
+const documentPath = ['collection', 'collection-001', 'childCollection', 'child-collection-001'];
+
+// Collection: collection/{collectionId}/childCollection
+const collectionPath = ['collection', 'collection-001', 'childCollection'];
+```
+
+**Example with the service:**
+
+```typescript
+this.firestoreData
+  .listenToDocument<ChildDocument>(documentPath)
+  .subscribe((res) => { /* ... */ });
+```
+
+---
+
+<a id="5-checklist"></a>
+
+## 5. Checklist
+
+- [ ] `ngx-firestore-wrapper-kit` installed
+- [ ] Firebase config added to `environment.ts`
+- [ ] `provideFirestoreKit(environment.firebaseConfig)` in root providers
+- [ ] `FirestoreDataService` injected in components/services
+- [ ] Paths passed as `string[]`
+- [ ] Subscriptions unsubscribed in `ngOnDestroy` (or use `async` pipe)
+
+---
+
+<a id="exports-reference"></a>
+
+## Exports reference
+
+| Export | Use |
+|--------|-----|
+| `provideFirestoreKit(config)` | Bootstrap Firebase + Firestore in the app |
+| `FirestoreDataService` | `listenToDocument()`, `listenToCollection()` |
+| `FirestorePaths` | Static path segment helpers |
+| `FirestoreResponse<T>` | Type for listener responses |
