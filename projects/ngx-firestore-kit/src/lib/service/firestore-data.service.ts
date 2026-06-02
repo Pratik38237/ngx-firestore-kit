@@ -22,8 +22,10 @@ export class FirestoreDataService {
      * Listen realtime document changes
      */
     public listenToDocument<T>(pathSegments: string[]): Observable<FirestoreResponse<T>> {
-        const documentRef = doc(this.firestore, pathSegments[0], ...pathSegments.slice(1));
-        return runInInjectionContext(this.injector, () => docData(documentRef)).pipe(
+        return runInInjectionContext(this.injector, () => {
+            const documentRef = doc(this.firestore, pathSegments[0], ...pathSegments.slice(1));
+            return docData(documentRef);
+        }).pipe(
             // Cast the response to the expected type
             filter((response) => response != null),
             // Return the response
@@ -41,8 +43,10 @@ export class FirestoreDataService {
      * Listen realtime collection changes
      */
     public listenToCollection<T>(collectionPath: string[]): Observable<FirestoreResponse<T[]>> {
-        const collectionRef = collection(this.firestore, collectionPath[0], ...collectionPath.slice(1));
-        return runInInjectionContext(this.injector, () => collectionChanges(collectionRef)).pipe(
+        return runInInjectionContext(this.injector, () => {
+            const collectionRef = collection(this.firestore, collectionPath[0], ...collectionPath.slice(1));
+            return collectionChanges(collectionRef);
+        }).pipe(
             // Cast the response to the expected type
             map((response) => ({ success: true, data: response, error: null })),
             // Handle errors
