@@ -97,7 +97,6 @@ Import from the package:
 ```typescript
 import {
   FirestoreDataService,
-  FirestorePaths,
   FirestoreResponse
 } from 'ngx-firestore-wrapper-kit';
 ```
@@ -129,7 +128,7 @@ Always check `success` before using `data`.
 ```typescript
 import { inject, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { FirestoreDataService, FirestorePaths, FirestoreResponse } from 'ngx-firestore-wrapper-kit';
+import { FirestoreDataService, FirestoreResponse } from 'ngx-firestore-wrapper-kit';
 
 interface BatchJob {
   status: string;
@@ -143,7 +142,8 @@ export class BatchJobComponent implements OnInit, OnDestroy {
   response: FirestoreResponse<BatchJob> | null = null;
 
   ngOnInit(): void {
-    const path = FirestorePaths.getBatchJobDocumentPath('client-001', 'job-001');
+    // collection / collection-001 (document) / subCollection / sub-collection-001 (document)
+    const path = ['collection', 'collection-001', 'subCollection', 'sub-collection-001'];
 
     this.sub = this.firestoreData
       .listenToDocument<BatchJob>(path)
@@ -165,7 +165,7 @@ export class BatchJobComponent implements OnInit, OnDestroy {
 ```typescript
 import { inject, OnDestroy, OnInit } from '@angular/core';
 import { Subscription } from 'rxjs';
-import { FirestoreDataService, FirestorePaths, FirestoreResponse } from 'ngx-firestore-wrapper-kit';
+import { FirestoreDataService, FirestoreResponse } from 'ngx-firestore-wrapper-kit';
 
 interface BatchJob {
   status: string;
@@ -179,7 +179,8 @@ export class BatchJobListComponent implements OnInit, OnDestroy {
   response: FirestoreResponse<BatchJob[]> | null = null;
 
   ngOnInit(): void {
-    const path = FirestorePaths.getBatchJobCollectionPath('client-001');
+    // collection / collection-001 (document) / subCollection
+    const path = ['collection', 'collection-001', 'subCollection'];
 
     this.sub = this.firestoreData
       .listenToCollection<BatchJob>(path)
@@ -201,11 +202,11 @@ export class BatchJobListComponent implements OnInit, OnDestroy {
 Build paths as **string arrays** — alternating collection and document IDs:
 
 ```typescript
-// Document: collection/{collectionId}/childCollection/{childCollectionDocumentId}
-const documentPath = ['collection', 'collection-001', 'childCollection', 'child-collection-001'];
+// Document: collection / {collectionId} (document) / subCollection / {subCollectionId} (document)
+const documentPath = ['collection', 'collection-001', 'subCollection', 'sub-collection-001'];
 
-// Collection: collection/{collectionId}/childCollection
-const collectionPath = ['collection', 'collection-001', 'childCollection'];
+// Collection: collection / {collectionId} (document) / subCollection
+const collectionPath = ['collection', 'collection-001', 'subCollection'];
 ```
 
 **Example with the service:**
@@ -239,5 +240,4 @@ this.firestoreData
 |--------|-----|
 | `provideFirestoreKit(config)` | Bootstrap Firebase + Firestore in the app |
 | `FirestoreDataService` | `listenToDocument()`, `listenToCollection()` |
-| `FirestorePaths` | Static path segment helpers |
 | `FirestoreResponse<T>` | Type for listener responses |
