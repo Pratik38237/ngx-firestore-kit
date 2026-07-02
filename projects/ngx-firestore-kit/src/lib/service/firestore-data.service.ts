@@ -43,6 +43,32 @@ export class FirestoreDataService {
     }
 
     /**
+    * Fetch document once — same path as {@link listenToDocument}.
+    *
+    * await:
+    *   const res = await firestoreData.getDocument&lt;Job&gt;(path);
+    *
+    * .then:
+    *   firestoreData.getDocument&lt;Job&gt;(path).then(res =&gt; { ... });
+    */
+    public async getDocument$<T>(pathSegments: string[]): Promise<FirestoreResponse<T | null>> {
+        try {
+            const snapshot = await runInInjectionContext(this.injector, () => {
+                const ref = doc(this.firestore, pathSegments[0], ...pathSegments.slice(1));
+                return getDoc(ref);
+            });
+            return {
+                success: true,
+                data: snapshot.exists() ? (snapshot.data() as T) : null,
+                error: null,
+            };
+        } catch (error: unknown) {
+            console.error('[Firestore Document Get Error]', error);
+            return { success: false, data: null, error };
+        }
+    }
+
+    /**
      * Listen realtime document changes
      */
     public listenToDocument<T>(pathSegments: string[]): Observable<FirestoreResponse<T>> {
