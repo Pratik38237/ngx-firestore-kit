@@ -1,5 +1,5 @@
 import { Injectable, Injector, inject, runInInjectionContext } from '@angular/core';
-import { Firestore, collection, collectionChanges, doc, docData } from '@angular/fire/firestore';
+import { Firestore, collection, collectionChanges, doc, docData, getDoc } from '@angular/fire/firestore';
 import { Observable, of } from 'rxjs';
 import { catchError, filter, map } from 'rxjs/operators';
 
@@ -17,6 +17,30 @@ export class FirestoreDataService {
 
     private readonly firestore = inject(Firestore);
     private readonly injector = inject(Injector);
+
+    /**
+     * Fetch document once — same path as {@link listenToDocument}.
+     *
+     * await:
+     *   const res = await firestoreData.getDocument&lt;Job&gt;(path);
+     *
+     * .then:
+     *   firestoreData.getDocument&lt;Job&gt;(path).then(res =&gt; { ... });
+     */
+    /** Promise API: use with `.then()` or `await`. */
+    public getDocument<T>(pathSegments: string[]): Promise<FirestoreResponse<T | null>> {
+        return runInInjectionContext(this.injector, () => {
+            const ref = doc(this.firestore, pathSegments[0], ...pathSegments.slice(1));
+            return getDoc(ref);
+        }).then((snapshot) => ({
+            success: true,
+            data: snapshot.exists() ? (snapshot.data() as T) : null,
+            error: null,
+        })).catch((error: unknown) => {
+            console.error('[Firestore Document Get Error]', error);
+            return { success: false, data: null, error };
+        });
+    }
 
     /**
      * Listen realtime document changes
